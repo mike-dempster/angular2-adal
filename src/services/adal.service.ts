@@ -98,22 +98,12 @@ export class AdalService {
     }
 
     public acquireToken(resource: string) {
-        let _this = this;   // save outer this for inner function
-
-        let errorMessage: string;
-        return Observable.bindCallback(acquireTokenInternal, function (token: string) {
-            if (!token && errorMessage) {
-                throw (errorMessage);
-            }
-            return token;
-        })();
-
-        function acquireTokenInternal(cb: any): string {
+        let acquireTokenInternal = (cb: any): string => {
             let s: string = '';
 
-            _this.adalContext.acquireToken(resource, (error: string, tokenOut: string) => {
+            this.adalContext.acquireToken(resource, (error: string, tokenOut: string) => {
                 if (error) {
-                    _this.adalContext.error('Error when acquiring token for resource: ' + resource, error);
+                    this.adalContext.error('Error when acquiring token for resource: ' + resource, error);
                     errorMessage = error;
                     cb(<string>null);
                 } else {
@@ -122,12 +112,20 @@ export class AdalService {
                 }
             });
             return s;
-        }
+        };
+
+        let errorMessage: string;
+        return Observable.bindCallback(acquireTokenInternal, (token: string) => {
+            if (!token && errorMessage) {
+                throw (errorMessage);
+            }
+            return token;
+        })();
     }
 
     public getUser(): Observable<adal.User> {
         return Observable.bindCallback<User>((cb: (u: adal.User) => User) => {
-            this.adalContext.getUser(function (error: string, user: adal.User) {
+            this.adalContext.getUser((error: string, user: adal.User) => {
                 if (error) {
                     this.adalContext.error('Error when getting user', error);
                     cb(null);
